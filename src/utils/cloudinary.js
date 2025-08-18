@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
+
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 
@@ -10,11 +13,15 @@ cloudinary.config({
 const uploadOnCloudindary = async (localFilePath) => {
   try {
     if (!localFilePath) return null;
-    return await cloudinary.uploader.upload(localFilePath, {
+    const response = await cloudinary.uploader.upload(localFilePath, {
       resource_type: "auto",
     });
+    fs.unlinkSync(localFilePath); //removes the locally stored file;
+    return response;
   } catch (error) {
     fs.unlinkSync(localFilePath); //removes the locally stored file;
+    // console.log(error);
+
     return null;
   }
 };
