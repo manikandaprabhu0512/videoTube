@@ -26,4 +26,20 @@ const uploadOnCloudindary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudindary };
+const destroyOnCloudinary = async (public_id) => {
+  try {
+    if (!public_id) return null;
+    const response = await cloudinary.uploader.destroy(public_id, {
+      resource_type: "image",
+    });
+    // console.log("Cloudinary Response:", response);
+
+    return response;
+  } catch (error) {
+    // console.error("Cloundinary Upload Error: ", error);
+
+    return null;
+  }
+};
+
+export { uploadOnCloudindary, destroyOnCloudinary };
