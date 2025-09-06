@@ -278,7 +278,7 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
   if (fullName) user.fullName = fullName;
   if (email) user.email = email;
   if (username) user.username = username;
-  user.save({ validateBeforeSave: false });
+  await user.save({ validateBeforeSave: false });
 
   return res
     .status(201)

@@ -42,4 +42,20 @@ const destroyOnCloudinary = async (public_id) => {
   }
 };
 
-export { uploadOnCloudindary, destroyOnCloudinary };
+const destroyVideoOnCloudinary = async (public_id) => {
+  try {
+    if (!public_id) return null;
+    const response = await cloudinary.uploader.destroy(public_id, {
+      resource_type: "video",
+    });
+    // console.log("Cloudinary Response:", response);
+
+    return response;
+  } catch (error) {
+    // console.error("Cloundinary Upload Error: ", error);
+
+    return null;
+  }
+};
+
+export { uploadOnCloudindary, destroyOnCloudinary, destroyVideoOnCloudinary };
