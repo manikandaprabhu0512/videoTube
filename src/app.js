@@ -28,7 +28,7 @@ import tweetRouter from "./routes/tweet.route.js";
 import healthcheckRouter from "./routes/healthcheck.route.js";
 
 app.get("/", (req, res) => {
-  req.send("Hello World");
+  res.send("Hello World");
 });
 
 // Router Declartion
