@@ -27,6 +27,10 @@ import likeRouter from "./routes/like.route.js";
 import tweetRouter from "./routes/tweet.route.js";
 import healthcheckRouter from "./routes/healthcheck.route.js";
 
+app.get("/", (req, res) => {
+  req.send("Hello World");
+});
+
 // Router Declartion
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/videos", videoRouter);
