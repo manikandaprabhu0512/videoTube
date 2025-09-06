@@ -25,6 +25,7 @@ import playlistRouter from "./routes/playlist.route.js";
 import commentsRouter from "./routes/comments.route.js";
 import likeRouter from "./routes/like.route.js";
 import tweetRouter from "./routes/tweet.route.js";
+import healthcheckRouter from "./routes/healthcheck.route.js";
 
 // Router Declartion
 app.use("/api/v1/users", userRouter);
@@ -34,5 +35,6 @@ app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/comments", commentsRouter);
 app.use("/api/v1/likes", likeRouter);
 app.use("/api/v1/tweets", tweetRouter);
+app.use("/api/v1/health", healthcheckRouter);
 
 export { app };
