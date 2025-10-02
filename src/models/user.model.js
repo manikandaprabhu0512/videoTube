@@ -28,11 +28,9 @@ const userSchema = new Schema(
     avatar: {
       url: {
         type: String,
-        required: true,
       },
       public_id: {
         type: String,
-        required: true,
       },
     },
     coverImage: {
@@ -42,6 +40,9 @@ const userSchema = new Schema(
       public_id: {
         type: String,
       },
+    },
+    biography: {
+      type: String,
     },
     watchHistory: [
       {

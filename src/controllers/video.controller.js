@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Video } from "../models/video.model.js";
+import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiErrors.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -80,6 +81,50 @@ const getAVideo = asyncHandler(async (req, res, next) => {
   return res
     .status(200)
     .json(new ApiResponse(200, videoDetails, "Video Fetched Successfully"));
+});
+
+const getVideosByUsername = asyncHandler(async (req, res, next) => {
+  const { username } = req.params;
+  if (!username) throw new ApiError(400, "Username Id is missing");
+
+  const videos = await Video.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+              fullName: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unwind: "$owner",
+    },
+    {
+      $match: {
+        "owner.username": username.toLowerCase(),
+      },
+    },
+    {
+      $sort: {
+        createdAt: -1,
+      },
+    },
+  ]);
+
+  if (!videos) throw new ApiError(404, "User not found");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Videos Fetched Successfully"));
 });
 
 const updateVideoDetails = asyncHandler(async (req, res, next) => {
@@ -189,7 +234,7 @@ const togglePublishVideo = asyncHandler(async (req, res) => {
 });
 
 const getAllVideo = asyncHandler(async (req, res, next) => {
-  const { userId, page = 1, limit = 1, query, sortBy, sortType } = req.query;
+  const { userId, page = 1, limit = 10, query, sortBy, sortType } = req.query;
 
   let match = {};
   if (query) match.title = { $regex: query, $options: "i" };
@@ -207,6 +252,26 @@ const getAllVideo = asyncHandler(async (req, res, next) => {
         [sortBy]: sortType === "asc" ? 1 : -1,
       },
     },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+              fullName: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $unwind: "$owner",
+    },
   ];
 
   const videos = Video.aggregate(pipeline);
@@ -218,11 +283,31 @@ const getAllVideo = asyncHandler(async (req, res, next) => {
 
   const videosList = await Video.aggregatePaginate(videos, options);
 
-  // console.log(videosList);
-
   return res
     .status(200)
     .json(new ApiResponse(200, videosList, "Videos Fetched Successfully"));
+});
+
+const addVideoToWatchHistory = asyncHandler(async (req, res, next) => {
+  const { videoId } = req.params;
+
+  if (!videoId) throw new ApiError(400, "Video is Missing");
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $addToSet: { watchHistory: videoId },
+    },
+    { new: true }
+  );
+
+  if (!user) throw new ApiError(404, "User Not Found");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, {}, "Video Added to Watch History Successfully")
+    );
 });
 
 export {
@@ -233,4 +318,6 @@ export {
   deleteAVideo,
   togglePublishVideo,
   getAllVideo,
+  getVideosByUsername,
+  addVideoToWatchHistory,
 };

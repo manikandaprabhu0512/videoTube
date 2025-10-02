@@ -9,7 +9,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       req.cookies?.accessToken ||
       req.header("Authorization")?.replace("Bearer ", "");
 
-    if (!token) throw new ApiError(400, "Unauthorized Action");
+    if (!token) throw new ApiError(401, "Token Expired");
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
@@ -20,7 +20,16 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error("ERR:: ", error);
-    throw new ApiError(400, "Invalid Action");
+    // if (error.name === "TokenExpiredError") {
+    //   throw new ApiError(401, "Token expired");
+    // }
+
+    // if (error.name === "JsonWebTokenError") {
+    //   throw new ApiError(403, "Invalid token Id");
+    // }
+
+    console.log("Error in Middleware", error);
+
+    throw new ApiError(500, "Internal server error");
   }
 });

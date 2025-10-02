@@ -5,8 +5,10 @@ import {
   deleteAVideo,
   getAllVideo,
   getAVideo,
+  getVideosByUsername,
   pulishAVideo,
   togglePublishVideo,
+  addVideoToWatchHistory,
   updateThumbnail,
   updateVideoDetails,
 } from "../controllers/video.controller.js";
@@ -42,5 +44,9 @@ router.route("/c/:videoId").delete(deleteAVideo);
 router.route("/c/toggle/:videoId").patch(togglePublishVideo);
 
 router.route("/").get(getAllVideo);
+
+router.route("/c/user/:username").get(getVideosByUsername);
+
+router.route("/c/watchHistory/:videoId").patch(addVideoToWatchHistory);
 
 export default router;

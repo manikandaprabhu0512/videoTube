@@ -89,8 +89,6 @@ const channelSubscribers = asyncHandler(async (req, res, next) => {
     },
   ]);
 
-  console.log(subscribers);
-
   return res
     .status(200)
     .json(
