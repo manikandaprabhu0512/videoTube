@@ -73,8 +73,6 @@ const toggleCommentLike = asyncHandler(async (req, res, next) => {
 
   if (!likeAComment) throw new ApiError(400, "Something went wrong!!");
 
-  console.log(likeAComment);
-
   return res
     .status(200)
     .json(new ApiResponse(200, likeAComment, "Liked Video Successfully"));
@@ -212,8 +210,6 @@ const getAllTweetLikes = asyncHandler(async (req, res, next) => {
     likedTweetsAggregate,
     options
   );
-
-  console.log(likedTweetsAggregatePaginate);
 
   return res
     .status(200)

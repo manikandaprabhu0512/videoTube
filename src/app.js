@@ -6,7 +6,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173", // dev
-  "https://your-frontend-on-render.com", // production frontend
+  "https://video-tube-frontend-gamma.vercel.app/", // production frontend
 ];
 
 app.use(

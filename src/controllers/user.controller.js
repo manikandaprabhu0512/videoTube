@@ -16,15 +16,11 @@ const generateAccessandRefreshTokens = async (userId) => {
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();
 
-    console.log("AccessToken: ", accessToken);
-    console.log("RefreshToken: ", refreshToken);
-
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
     return { accessToken, refreshToken };
   } catch (error) {
-    console.error("Error Generating Tokens: ", error);
     throw new ApiError(500, "Something Went Wrong");
   }
 };
@@ -124,16 +120,12 @@ const loginUser = asyncHandler(async (req, res, next) => {
   if (!user) throw new ApiError(404, "User not found");
 
   const validatePassword = await user.isPasswordCorrect(password);
-  // console.log(validatePassword);
 
   if (!validatePassword) throw new ApiError(401, "Invalid Password");
 
   const { accessToken, refreshToken } = await generateAccessandRefreshTokens(
     user._id
   );
-
-  // console.log("AccessToken Inside: ", accessToken);
-  // console.log("RefreshToken Inside: ", refreshToken);
 
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
@@ -142,7 +134,7 @@ const loginUser = asyncHandler(async (req, res, next) => {
   const options = {
     httpOnly: true,
     secure: true,
-    sameSite: "none",
+    sameSite: "None",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
@@ -190,8 +182,6 @@ const refreshAcessToken = asyncHandler(async (req, res, next) => {
     const presentRefreshToken =
       req.cookies.refreshToken || req.body.refreshToken;
 
-    console.log("Present Refresh Token: ", presentRefreshToken);
-
     if (!presentRefreshToken) throw new ApiError(401, "Unauthorized Request");
 
     // const decodedToken = JsonWebTokenErrorjwt.verify(
@@ -203,8 +193,6 @@ const refreshAcessToken = asyncHandler(async (req, res, next) => {
       presentRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
-
-    console.log("Decoded Token: ", decodedToken);
 
     const user = await User.findById(decodedToken._id);
 
@@ -227,7 +215,6 @@ const refreshAcessToken = asyncHandler(async (req, res, next) => {
       .cookie("refreshToken", newRefreshToken, options)
       .json(new ApiResponse(200, {}, "RefreshToken Generated Successfully"));
   } catch (error) {
-    console.error("Error Generating RefreshToken", error);
     throw new ApiError(500, error.message || "Something Went wrong");
   }
 });
@@ -389,7 +376,6 @@ const removeCoverImage = asyncHandler(async (req, res, next) => {
   const coverImageResponse = await destroyOnCloudinary(
     req.user?.coverImage.public_id
   );
-  console.log(coverImageResponse);
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
@@ -473,8 +459,6 @@ const getChannelProfileDetails = asyncHandler(async (req, res) => {
 
   if (!channel) throw new ApiError(404, "User not Found");
 
-  // console.log(channel);
-
   return res
     .status(200)
     .json(new ApiResponse(200, channel[0], "User Data Fetched Successfully"));
@@ -522,8 +506,6 @@ const watchHistory = asyncHandler(async (req, res) => {
       },
     },
   ]);
-
-  // console.log(history);
 
   if (!history) throw new ApiError(500, "Fetch Watch History Failed");
 

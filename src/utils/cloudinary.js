@@ -20,7 +20,6 @@ const uploadOnCloudindary = async (localFilePath) => {
     return response;
   } catch (error) {
     fs.unlinkSync(localFilePath); //removes the locally stored file;
-    // console.log(error);
 
     return null;
   }
@@ -32,12 +31,9 @@ const destroyOnCloudinary = async (public_id) => {
     const response = await cloudinary.uploader.destroy(public_id, {
       resource_type: "image",
     });
-    // console.log("Cloudinary Response:", response);
 
     return response;
   } catch (error) {
-    // console.error("Cloundinary Upload Error: ", error);
-
     return null;
   }
 };

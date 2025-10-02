@@ -95,8 +95,6 @@ const getUserTweet = asyncHandler(async (req, res, next) => {
 
   const userTweetAggregate = await Tweet.aggregatePaginate(userTweet, options);
 
-  // console.log(userTweetAggregate);
-
   return res
     .status(200)
     .json(
@@ -139,8 +137,6 @@ const getAllTweet = asyncHandler(async (req, res, next) => {
     allUserTweet,
     options
   );
-
-  // console.log(userTweetAggregate);
 
   return res
     .status(200)

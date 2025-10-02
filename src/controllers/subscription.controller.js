@@ -128,8 +128,6 @@ const channelSubscribed = asyncHandler(async (req, res, next) => {
     },
   ]);
 
-  console.log(subscribed);
-
   return res
     .status(200)
     .json(

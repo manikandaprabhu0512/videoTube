@@ -20,16 +20,6 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    // if (error.name === "TokenExpiredError") {
-    //   throw new ApiError(401, "Token expired");
-    // }
-
-    // if (error.name === "JsonWebTokenError") {
-    //   throw new ApiError(403, "Invalid token Id");
-    // }
-
-    console.log("Error in Middleware", error);
-
     throw new ApiError(500, "Internal server error");
   }
 });

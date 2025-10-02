@@ -74,8 +74,6 @@ const getAVideo = asyncHandler(async (req, res, next) => {
     { $unwind: "$owner" },
   ]);
 
-  // console.log(videoDetails);
-
   if (!videoDetails) throw new ApiError(404, "Video not found");
 
   return res
@@ -162,10 +160,7 @@ const updateThumbnail = asyncHandler(async (req, res, next) => {
 
   if (!newThumnailPath) throw new ApiError(400, "Thumbnail is missing");
 
-  // console.log(newThumbnail);
-
   const Thumbnail = await Video.findById(videoId);
-  // console.log(Thumbnail);
 
   if (!Thumbnail) throw new ApiError(404, "Video Not Found");
 
@@ -178,7 +173,6 @@ const updateThumbnail = asyncHandler(async (req, res, next) => {
   await Thumbnail.save({ validateBeforeSave: false });
 
   if (oldThumbnailId) await destroyOnCloudinary(oldThumbnailId);
-  // console.log(oldThumbnailId);
 
   return res
     .status(200)
@@ -192,17 +186,13 @@ const deleteAVideo = asyncHandler(async (req, res, next) => {
 
   if (!response) throw new ApiError(404, "Video Not Found");
 
-  // console.log(response);
-
   if (response.videoFile.public_id) {
     const videoRes = await destroyVideoOnCloudinary(
       response.videoFile.public_id
     );
-    // console.log(videoRes);
   }
   if (response.thumbnail.public_id) {
     const thumbRes = await destroyOnCloudinary(response.thumbnail.public_id);
-    // console.log(thumbRes);
   }
 
   return res
