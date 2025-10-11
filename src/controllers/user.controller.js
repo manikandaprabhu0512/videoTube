@@ -16,6 +16,9 @@ const generateAccessandRefreshTokens = async (userId) => {
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();
 
+    console.log("accessToken", accessToken);
+    console.log("refreshToken", refreshToken);
+
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
@@ -121,7 +124,11 @@ const loginUser = asyncHandler(async (req, res, next) => {
 
   const validatePassword = await user.isPasswordCorrect(password);
 
-  if (!validatePassword) throw new ApiError(401, "Invalid Password");
+  // if (!validatePassword) throw new ApiError(401, "Invalid Password");
+  if (!validatePassword)
+    return res.status(401).json({ message: "Invalid Password" });
+
+  console.log("user id", user._id);
 
   const { accessToken, refreshToken } = await generateAccessandRefreshTokens(
     user._id
@@ -179,15 +186,13 @@ const logoutUser = asyncHandler(async (req, res, next) => {
 
 const refreshAcessToken = asyncHandler(async (req, res, next) => {
   try {
+    console.log("Cookies:", req.cookies);
+    console.log("Body:", req.body);
+
     const presentRefreshToken =
       req.cookies.refreshToken || req.body.refreshToken;
 
     if (!presentRefreshToken) throw new ApiError(401, "Unauthorized Request");
-
-    // const decodedToken = JsonWebTokenErrorjwt.verify(
-    //   presentRefreshToken,
-    //   process.env.REFRESH_TOKEN_SECRET
-    // );
 
     const decodedToken = jwt.verify(
       presentRefreshToken,
@@ -201,18 +206,28 @@ const refreshAcessToken = asyncHandler(async (req, res, next) => {
     if (presentRefreshToken != user.refreshToken)
       throw new ApiError(401, "User Doesnot exists or Invalid Action");
 
-    const { newAccessToken, newRefreshToken } =
-      await generateAccessandRefreshTokens(user._id);
+    console.log("user id", user._id);
+
+    const { accessToken, refreshToken } = await generateAccessandRefreshTokens(
+      user._id
+    );
+
+    console.log("New Refresh Token Generated");
+
+    console.log("New Access Token:", accessToken);
+    console.log("New Refresh Token:", refreshToken);
 
     const options = {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     };
 
     res
       .status(200)
-      .cookie("accessToken", newAccessToken, options)
-      .cookie("refreshToken", newRefreshToken, options)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
       .json(new ApiResponse(200, {}, "RefreshToken Generated Successfully"));
   } catch (error) {
     throw new ApiError(500, error.message || "Something Went wrong");

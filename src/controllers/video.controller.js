@@ -47,7 +47,11 @@ const pulishAVideo = asyncHandler(async (req, res, next) => {
 const getAVideo = asyncHandler(async (req, res, next) => {
   const { videoId } = req.params;
 
-  //   const videoDetails = await Video.findById(videoId);
+  const video = await Video.findByIdAndUpdate(videoId, {
+    $inc: { views: 1 },
+  });
+  if (!video) throw new ApiError(404, "Video not found");
+
   const videoDetails = await Video.aggregate([
     {
       $match: {
@@ -187,12 +191,10 @@ const deleteAVideo = asyncHandler(async (req, res, next) => {
   if (!response) throw new ApiError(404, "Video Not Found");
 
   if (response.videoFile.public_id) {
-    const videoRes = await destroyVideoOnCloudinary(
-      response.videoFile.public_id
-    );
+    await destroyVideoOnCloudinary(response.videoFile.public_id);
   }
   if (response.thumbnail.public_id) {
-    const thumbRes = await destroyOnCloudinary(response.thumbnail.public_id);
+    await destroyOnCloudinary(response.thumbnail.public_id);
   }
 
   return res
