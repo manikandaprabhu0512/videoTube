@@ -16,9 +16,6 @@ const generateAccessandRefreshTokens = async (userId) => {
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();
 
-    console.log("accessToken", accessToken);
-    console.log("refreshToken", refreshToken);
-
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
@@ -128,8 +125,6 @@ const loginUser = asyncHandler(async (req, res, next) => {
   if (!validatePassword)
     return res.status(401).json({ message: "Invalid Password" });
 
-  console.log("user id", user._id);
-
   const { accessToken, refreshToken } = await generateAccessandRefreshTokens(
     user._id
   );
@@ -186,9 +181,6 @@ const logoutUser = asyncHandler(async (req, res, next) => {
 
 const refreshAcessToken = asyncHandler(async (req, res, next) => {
   try {
-    console.log("Cookies:", req.cookies);
-    console.log("Body:", req.body);
-
     const presentRefreshToken =
       req.cookies.refreshToken || req.body.refreshToken;
 
@@ -206,16 +198,9 @@ const refreshAcessToken = asyncHandler(async (req, res, next) => {
     if (presentRefreshToken != user.refreshToken)
       throw new ApiError(401, "User Doesnot exists or Invalid Action");
 
-    console.log("user id", user._id);
-
     const { accessToken, refreshToken } = await generateAccessandRefreshTokens(
       user._id
     );
-
-    console.log("New Refresh Token Generated");
-
-    console.log("New Access Token:", accessToken);
-    console.log("New Refresh Token:", refreshToken);
 
     const options = {
       httpOnly: true,
