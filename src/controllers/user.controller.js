@@ -16,8 +16,11 @@ const generateAccessandRefreshTokens = async (userId) => {
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();
 
-    user.refreshToken = refreshToken;
-    await user.save({ validateBeforeSave: false });
+    await User.findByIdAndUpdate(
+      userId,
+      { $push: { refreshToken } },
+      { new: true, validateBeforeSave: false }
+    );
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -155,34 +158,40 @@ const logoutUser = asyncHandler(async (req, res, next) => {
     4. Clear Cookie from the browser.
   */
 
-  const user = await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $set: {
-        refreshToken: undefined,
+  try {
+    const presentRefreshToken =
+      req.cookies.refreshToken || req.body.refreshToken;
+
+    if (!presentRefreshToken) throw new ApiError(401, "Unauthorized Request");
+
+    await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $pull: { refreshToken: presentRefreshToken },
       },
-    },
-    {
-      new: true,
-    }
-  );
+      { new: true }
+    );
 
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
 
-  res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "Logged Out Successfully"));
+    res
+      .status(200)
+      .clearCookie("accessToken", options)
+      .clearCookie("refreshToken", options)
+      .json(new ApiResponse(200, {}, "Logged Out Successfully"));
+  } catch (error) {
+    throw new ApiError(500, error.message || "Something Went wrong");
+  }
 });
 
 const refreshAcessToken = asyncHandler(async (req, res, next) => {
   try {
-    const presentRefreshToken =
-      req.cookies.refreshToken || req.body.refreshToken;
+    const presentRefreshToken = (
+      req.cookies.refreshToken || req.body.refreshToken
+    ).trim();
 
     if (!presentRefreshToken) throw new ApiError(401, "Unauthorized Request");
 
@@ -195,12 +204,23 @@ const refreshAcessToken = asyncHandler(async (req, res, next) => {
 
     if (!user) throw new ApiError(401, "Invalid User");
 
-    if (presentRefreshToken != user.refreshToken)
-      throw new ApiError(401, "User Doesnot exists or Invalid Action");
+    const validTokenExists = user.refreshToken.some(
+      (token) => token.trim() === presentRefreshToken
+    );
+
+    if (!validTokenExists) {
+      throw new ApiError(401, "Invalid or expired refresh token");
+    }
 
     const { accessToken, refreshToken } = await generateAccessandRefreshTokens(
       user._id
     );
+
+    user.refreshToken = user.refreshToken.filter(
+      (token) => token.trim() !== presentRefreshToken
+    );
+    user.refreshToken.push(refreshToken);
+    await user.save({ validateBeforeSave: false });
 
     const options = {
       httpOnly: true,
@@ -446,10 +466,12 @@ const getChannelProfileDetails = asyncHandler(async (req, res) => {
     },
     {
       $project: {
+        _id: 1,
         username: 1,
         fullName: 1,
         avatar: 1,
         coverImage: 1,
+        biography: 1,
         subscribers: 1,
         subscribedTo: 1,
         isSubscribed: 1,

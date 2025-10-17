@@ -100,8 +100,6 @@ const getVideosByUsername = asyncHandler(async (req, res, next) => {
           {
             $project: {
               username: 1,
-              avatar: 1,
-              fullName: 1,
             },
           },
         ],
