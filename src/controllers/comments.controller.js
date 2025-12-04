@@ -76,6 +76,26 @@ const getComments = asyncHandler(async (req, res, next) => {
       },
     },
     {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+      },
+    },
+    {
+      $unwind: "$owner",
+    },
+    {
+      $project: {
+        _id: "$_id",
+        comment: "$content",
+        username: "$owner.username",
+        avatar: "$owner.avatar",
+        createdAt: 1,
+      },
+    },
+    {
       $sort: {
         createdAt: -1,
       },

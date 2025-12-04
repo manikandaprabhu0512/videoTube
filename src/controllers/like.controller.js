@@ -218,6 +218,22 @@ const getAllTweetLikes = asyncHandler(async (req, res, next) => {
     );
 });
 
+const getVideosLikes = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) throw new ApiError(400, "Video Id is missing");
+
+  const videoLikes = await Like.find({
+    likedVideo: new mongoose.Types.ObjectId(videoId),
+  });
+
+  if (!videoLikes) throw new ApiError(404, "Video Not Found");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videoLikes, "Video Likes Fetched Successfully"));
+});
+
 export {
   toggleVideoLike,
   toggleCommentLike,
@@ -225,4 +241,5 @@ export {
   getAllVideoLikes,
   getAllCommetLikes,
   getAllTweetLikes,
+  getVideosLikes,
 };

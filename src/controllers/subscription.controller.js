@@ -6,14 +6,6 @@ import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 const subscribeChannel = asyncHandler(async (req, res, next) => {
-  /* 
-    1. Create a Document of Subscriber and Channel
-    2. Get Channel Id from Params.
-    3. User ID from middleware.
-    4. If userId & channel Id same throw error
-    5. Find for userId and Channel. If same throw already subscribed. Else Create one;
-    */
-
   const { channelId } = req.params;
 
   const userId = req.user?._id;
@@ -82,9 +74,10 @@ const channelSubscribers = asyncHandler(async (req, res, next) => {
     },
     {
       $project: {
-        "channelSubscribers.username": 1,
-        "channelSubscribers.fullName": 1,
-        "channelSubscribers.avatar": 1,
+        _id: "$channelSubscribers._id",
+        username: "$channelSubscribers.username",
+        fullName: "$channelSubscribers.fullName",
+        avatar: "$channelSubscribers.avatar",
       },
     },
   ]);
@@ -121,9 +114,10 @@ const channelSubscribed = asyncHandler(async (req, res, next) => {
     },
     {
       $project: {
-        "channelSubscribed.username": 1,
-        "channelSubscribed.fullName": 1,
-        "channelSubscribed.avatar": 1,
+        _id: "$channelSubscribed._id",
+        username: "$channelSubscribed.username",
+        fullName: "$channelSubscribed.fullName",
+        avatar: "$channelSubscribed.avatar",
       },
     },
   ]);
