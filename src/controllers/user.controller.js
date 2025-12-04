@@ -23,6 +23,11 @@ const generateAccessandRefreshTokens = async (userId) => {
       { $push: { refreshToken } },
       { new: true, validateBeforeSave: false }
     );
+    await User.findByIdAndUpdate(
+      userId,
+      { $push: { refreshToken } },
+      { new: true, validateBeforeSave: false }
+    );
 
     return { accessToken, refreshToken };
   } catch (error) {
@@ -179,8 +184,9 @@ const logoutUser = asyncHandler(async (req, res, next) => {
 
 const refreshAcessToken = asyncHandler(async (req, res, next) => {
   try {
-    const presentRefreshToken =
-      req.cookies.refreshToken || req.body.refreshToken;
+    const presentRefreshToken = (
+      req.cookies.refreshToken || req.body.refreshToken
+    ).trim();
 
     if (!presentRefreshToken) throw new ApiError(401, "Unauthorized Request");
 
@@ -203,6 +209,12 @@ const refreshAcessToken = asyncHandler(async (req, res, next) => {
     const { accessToken, refreshToken } = await generateAccessandRefreshTokens(
       user._id
     );
+
+    user.refreshToken = user.refreshToken.filter(
+      (token) => token.trim() !== presentRefreshToken
+    );
+    user.refreshToken.push(refreshToken);
+    await user.save({ validateBeforeSave: false });
 
     const options = {
       httpOnly: true,
