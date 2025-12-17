@@ -44,7 +44,31 @@ const sendOTPVerificationEmail = asyncHandler(async (req, res, next) => {
     await sendEmail({
       to: email,
       subject: "Verify your Email for Videogram",
-      html: `<p>Your OTP for email verification is <b>${otp}</b>. It is valid for 10 minutes.</p>`,
+      html: `<div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h2 style="color:#4f46e5;">Videogram</h2>
+
+    <p>Hello <strong>${username}</strong>,</p>
+
+    <p>
+      Your verification code for your Videogram account is:
+    </p>
+
+    <h1 style="letter-spacing: 4px;">${otp}</h1>
+
+    <p>
+      This code is valid for <strong>10 minutes</strong>.
+    </p>
+
+    <p style="color:#6b7280; font-size: 14px;">
+      If you did not request this, please ignore this email.
+    </p>
+
+    <hr />
+
+    <p style="font-size: 12px; color:#9ca3af;">
+      © ${new Date().getFullYear()} Videogram. All rights reserved.
+    </p>
+  </div>`,
     });
 
     const otpData = await OtpVerification.create({
