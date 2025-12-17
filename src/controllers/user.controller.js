@@ -11,6 +11,7 @@ import jwt from "jsonwebtoken";
 import { OtpVerification } from "../models/otp_verification.model.js";
 import { getTransporter } from "../utils/NodeMailer.js";
 import crypto from "crypto";
+import { sendEmail } from "../utils/SendGrid.js";
 
 const generateAccessandRefreshTokens = async (userId) => {
   try {
@@ -40,15 +41,11 @@ const sendOTPVerificationEmail = asyncHandler(async (req, res, next) => {
   try {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const mailOptions = {
-      from: {
-        name: "Videogram Support",
-        address: process.env.SMTP_USER,
-      },
+    await sendEmail({
       to: email,
       subject: "Verify your Email for Videogram",
       html: `<p>Your OTP for email verification is <b>${otp}</b>. It is valid for 10 minutes.</p>`,
-    };
+    });
 
     const otpData = await OtpVerification.create({
       username,
@@ -56,12 +53,6 @@ const sendOTPVerificationEmail = asyncHandler(async (req, res, next) => {
       createdAt: Date.now(),
       expiresAt: Date.now() + 10 * 60 * 1000,
     });
-
-    const transporter = getTransporter();
-
-    if (!transporter) throw new ApiError(500, "Transporter not found");
-
-    await transporter.sendMail(mailOptions);
 
     return res
       .status(200)
