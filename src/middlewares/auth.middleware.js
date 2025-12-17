@@ -23,9 +23,11 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    if (error.name === "TokenExpiredError") {
+    if (error.message === "Token Expired") {
       return res.status(401).json({ message: "Token Expired" });
     }
+    console.error("Error Name", error.message);
+
     throw new ApiError(401, "Invalid User");
   }
 });

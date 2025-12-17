@@ -8,21 +8,17 @@ import {
 import ApiResponse from "../utils/ApiResponse.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
+import { OtpVerification } from "../models/otp_verification.model.js";
+import { getTransporter } from "../utils/NodeMailer.js";
+import crypto from "crypto";
 
 const generateAccessandRefreshTokens = async (userId) => {
   try {
-    console.log("Generate Function Called");
-
     const user = await User.findById(userId);
 
     const accessToken = await user.generateAccessToken();
     const refreshToken = await user.generateRefreshToken();
 
-    await User.findByIdAndUpdate(
-      userId,
-      { $push: { refreshToken } },
-      { new: true, validateBeforeSave: false }
-    );
     await User.findByIdAndUpdate(
       userId,
       { $push: { refreshToken } },
@@ -34,6 +30,117 @@ const generateAccessandRefreshTokens = async (userId) => {
     throw new ApiError(500, "Something Went Wrong");
   }
 };
+
+const sendOTPVerificationEmail = asyncHandler(async (req, res, next) => {
+  const { username, email } = req.body;
+
+  if (!username || !email)
+    throw new ApiError(400, "Username and Email are required");
+
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const mailOptions = {
+      from: {
+        name: "Videogram Support",
+        address: process.env.SMTP_USER,
+      },
+      to: email,
+      subject: "Verify your Email for Videogram",
+      html: `<p>Your OTP for email verification is <b>${otp}</b>. It is valid for 10 minutes.</p>`,
+    };
+
+    const otpData = await OtpVerification.create({
+      username,
+      otp,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+
+    const transporter = getTransporter();
+
+    if (!transporter) throw new ApiError(500, "Transporter not found");
+
+    await transporter.sendMail(mailOptions);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, otpData, "OTP Sent Successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Sending OTP Failed");
+  }
+});
+
+const verifyRegistrationOTP = asyncHandler(async (req, res, next) => {
+  const { username, otp } = req.body;
+
+  if (!username || !otp)
+    throw new ApiError(400, "Username and OTP are required");
+
+  const otpData = await OtpVerification.findOne({ username });
+
+  if (!otpData) throw new ApiError(404, "OTP not found");
+
+  if (otpData.expiresAt < Date.now()) {
+    await OtpVerification.deleteMany({
+      username: otpData.username,
+    });
+    throw new ApiError(401, "OTP has expired");
+  }
+
+  const validateOTP = await otpData.isOtpValid(otp);
+
+  if (!validateOTP) {
+    throw new ApiError(401, "Invalid OTP");
+  }
+
+  await OtpVerification.deleteMany({ username: otpData.username });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "OTP Verified Successfully"));
+});
+
+const verifyResetPasswordOTP = asyncHandler(async (req, res, next) => {
+  const { username, otp } = req.body;
+
+  if (!username || !otp)
+    throw new ApiError(400, "Username and OTP are required");
+
+  const otpData = await OtpVerification.findOne({ username });
+
+  if (!otpData) throw new ApiError(404, "OTP not found");
+
+  if (otpData.expiresAt < Date.now()) {
+    await OtpVerification.deleteMany({
+      username: otpData.username,
+    });
+    throw new ApiError(401, "OTP has expired");
+  }
+
+  const validateOTP = await otpData.isOtpValid(otp);
+
+  if (!validateOTP) {
+    throw new ApiError(401, "Invalid OTP");
+  }
+
+  const user = await User.findOne({ username });
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordTokenExpiry = Date.now() + 10 * 60 * 1000;
+
+  await user.save();
+
+  await OtpVerification.deleteMany({ username: otpData.username });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "OTP Verified Successfully"));
+});
 
 const registerUser = asyncHandler(async (req, res, next) => {
   /* User Register Steps
@@ -567,6 +674,49 @@ const watchHistory = asyncHandler(async (req, res) => {
     );
 });
 
+const verifyEmail = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) throw new ApiError(401, "Email is Missing");
+
+  const user = await User.findOne({ email });
+
+  if (!user) throw new ApiError(404, "User not Found");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Email Verified Successfully"));
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  if (!email || !newPassword)
+    throw new ApiError(401, "Email and New Password are required");
+
+  const user = await User.findOne({ email });
+
+  if (!user) throw new ApiError(404, "User not Found");
+
+  if (!user.resetPasswordToken)
+    throw new ApiError(401, "Reset Password Token is Missing");
+
+  if (user.resetPasswordTokenExpiry < Date.now())
+    throw new ApiError(401, "Reset Password Token has expired");
+
+  user.password = newPassword;
+
+  user.resetPasswordToken = undefined;
+
+  user.resetPasswordTokenExpiry = undefined;
+
+  await user.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password Reset Successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -581,4 +731,9 @@ export {
   removeCoverImage,
   getChannelProfileDetails,
   watchHistory,
+  sendOTPVerificationEmail,
+  verifyRegistrationOTP,
+  verifyEmail,
+  resetPassword,
+  verifyResetPasswordOTP,
 };

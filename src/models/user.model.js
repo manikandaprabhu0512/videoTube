@@ -10,7 +10,7 @@ const userSchema = new Schema(
       lowercase: true,
       unique: true,
       trim: true,
-      index: true, //Costly but effective for Searching
+      index: true,
     },
     email: {
       type: String,
@@ -57,6 +57,12 @@ const userSchema = new Schema(
     refreshToken: {
       type: [String],
       default: [],
+    },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordTokenExpiry: {
+      type: Date,
     },
   },
   { timestamps: true }

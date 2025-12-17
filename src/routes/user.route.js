@@ -13,6 +13,11 @@ import {
   removeCoverImage,
   getChannelProfileDetails,
   watchHistory,
+  sendOTPVerificationEmail,
+  verifyEmail,
+  verifyRegistrationOTP,
+  verifyResetPasswordOTP,
+  resetPassword,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -61,5 +66,15 @@ router.route("/removecoverimage").post(verifyJWT, removeCoverImage);
 router.route("/c/:username").get(verifyJWT, getChannelProfileDetails);
 
 router.route("/watchHistory").get(verifyJWT, watchHistory);
+
+router.route("/send-otp").post(sendOTPVerificationEmail);
+
+router.route("/verify-registration-otp").post(verifyRegistrationOTP);
+
+router.route("/verify-email").post(verifyEmail);
+
+router.route("/verify-reset-password-otp").post(verifyResetPasswordOTP);
+
+router.route("/reset-password").post(resetPassword);
 
 export default router;
